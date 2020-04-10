@@ -1,0 +1,47 @@
+6. 
+
+How many different products are in each order? 
+
+SELECT OrderID, COUNT(Distinct PRODUCTID)AS Count_productid
+FROM OrderDetails
+Group by OrderID
+
+Which order has the most number of unique products?
+
+SELECT OrderID, MAX(COUNT(Distinct PRODUCTID))
+FROM OrderDetails;
+group by OrderID
+
+7.
+
+Which products are sold in jars? 
+
+SELECT productname,unit
+FROM Products
+where unit like '%jars%'
+
+
+What is the most expensive product that's sold in jars?
+
+SELECT MAX(Price)as LargestPrice
+FROM Products
+where unit like '%jars%'
+
+8. What are the product names are included in order ID 10250?
+
+SELECT Products.ProductName,OrderDetails.orderid
+FROM Products
+inner join orders
+on Products.productid=OrderDetails.productid
+where orderid=10250
+
+9.What products are contained in category 'Dairy Products'?
+
+SELECT Products.ProductName,categories.categoryname
+FROM categories
+inner join orders
+on categories.categoryid=Products.categoryid
+where categoryname=Dairy Products 
+
+
+

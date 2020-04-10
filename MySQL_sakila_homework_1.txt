@@ -1,0 +1,91 @@
+1. Which actors have the first name 'Scarlett'?
+
+Answer:Damon,Bening
+
+select *
+from actor
+where first_name = 'Scarlett'
+
+2. Which actors have the last name 'Johansson'
+
+Answer: Matthew,Ray,Albert
+
+select *
+from actor
+where last_name = 'Johansson'
+
+
+3. How many distinct actors last names are there?
+
+Answer: 121
+
+Select count(distinct last_name)
+from actor
+
+
+4. Which last names appear more than once?
+
+Select last_name
+from actor
+group by last_name
+having ( COUNT(last_name) > 1 )
+
+
+5. How many total rentals occurred in May?
+
+Answer:1156
+
+SELECT COUNT(rental_date)
+From rental
+where DATE_FORMAT(rental_date, '%M%Y')= 'May2005'
+
+
+
+6. How many staff processed rentals in May?
+
+Answer: TWO
+
+SELECT distinct staff_id
+from payment
+where DATE_FORMAT(PAYMENT_DATE, '%M%Y')= 'May2005'
+group by staff_id
+
+
+
+7. Which staff processed the most rentals in May?   
+
+Answer: staff_id 1
+
+Select max(count(staff_id))
+From payment
+Where date_format(payment_date,'%M%Y')= 'MAY2005'
+Group by staff_id
+
+
+Each staff processed time in May?
+
+Answer: Staff_id 1 :617 ; Staff_id_2
+
+SELECT count(staff_id),staff_id
+from payment
+where DATE_FORMAT(PAYMENT_DATE, '%M%Y')= 'May2005'
+group by staff_id
+
+
+8. Which customer paid the most rental in August? 
+
+Answer: customer id_116,195,204,237,362
+
+select max(amount)AS Max_amount,customer_id
+from payment
+where date_format(payment_date,'%M%Y')= 'August2005'
+group by customer_id
+order by max(amount) desc
+
+9. A summary of rental total amount by month.
+
+select sum(amount),date_format(payment_date,'%M%Y')AS PAYMENT_DATE
+from payment
+group by date_format(payment_date,'%M%Y')
+order by date_format(payment_date,'%M%Y') 
+
