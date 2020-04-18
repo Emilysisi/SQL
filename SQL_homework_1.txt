@@ -2,46 +2,85 @@
 
 How many different products are in each order? 
 
-SELECT OrderID, COUNT(Distinct PRODUCTID)AS Count_productid
+Select OrderID, Count(Distinct ProductID)AS Count_product
 FROM OrderDetails
 Group by OrderID
+order by 1 desc,2;
 
 Which order has the most number of unique products?
 
-SELECT OrderID, MAX(COUNT(Distinct PRODUCTID))
-FROM OrderDetails;
+select OrderID, count(distinct ProductID) as Count_Product
+from Orderdetails
 group by OrderID
+having count(distinct ProductID)=
+(
+ Select max(Count_Product)
+ from 
+ (select OrderID,count(distinct ProductID) as count_product
+ from OrderDetails
+ group by OrderID
+ order by 2 desc)
+)
+
 
 7.
 
 Which products are sold in jars? 
 
-SELECT productname,unit
+SELECT*
 FROM Products
 where unit like '%jars%'
 
 
 What is the most expensive product that's sold in jars?
 
-SELECT MAX(Price)as LargestPrice
-FROM Products
-where unit like '%jars%'
+slect *
+from products
+where unit like '%jars%' and price =
+(
+ SELECT MAX(Price)
+ FROM 
+  (select *
+   from products
+   where unit like '%jars%'
+   order by price desc)
+)
 
 8. What are the product names are included in order ID 10250?
 
-SELECT Products.ProductName,OrderDetails.orderid
-FROM Products
-inner join orders
-on Products.productid=OrderDetails.productid
-where orderid=10250
+solution 1(Table Join) 
+
+Select [Products].ProductName, [OrderDetails].OrderID
+From [Products] 
+join [OrderDetails]
+on [Products].ProductID=[OrderDetails].ProductID
+where OrderID=10250
+
+solution 2 (Sub query)
+
+select* 
+from products
+where productid in
+(select productid 
+ from orderdetails 
+ where orderid = 10250)
 
 9.What products are contained in category 'Dairy Products'?
 
-SELECT Products.ProductName,categories.categoryname
-FROM categories
-inner join orders
-on categories.categoryid=Products.categoryid
-where categoryname=Dairy Products 
+solution 1 (Table Join)
+
+Select ProductName, [Products].CategoryID, CategoryName
+From [products]
+Join [categories]
+On [products].CategoryID = [categories].CategoryID
+Where CategoryName = 'Dairy Products'
 
 
+solution 2 (sub query)
 
+Select Productname, 'dairy products' as CategoryName
+From [Products]
+Where CategoryID in
+ (select CategoryID 
+  from [Categories]
+  where CategoryName = 'dairy products')
