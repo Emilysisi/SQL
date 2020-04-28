@@ -6,34 +6,37 @@ USE SAKILA
 
 select *
 from actor
-where first_name = 'Scarlett'
+where first_name = 'Scarlett';
 
 2--Which actors have the last name 'Johansson'
 
 select *
 from actor 
-where last_name = 'Johansson'
-address
+where last_name = 'Johansson';
+
+
 3--How many distinct actors last names are there?
 
-Select count(distinct last_name)
-from actor
+Select count(distinct last_name) as count_last_name
+from actor;
 
 4--Which last names are not repeated?
 
-Select last_name, count(distinct first_name)
+Select last_name, count(distinct first_name) as count_first_name
 From actor
 Group by last_name
-Having count(distinct first_name) = 1
+Having count(distinct first_name) <= 1 ;
 
 5--Which last names appear more than once?
 
 Select last_name, count(distinct first_name)
 From actor
 Group by last_name
-Having count(distinct first_name) > 1
+Having count(distinct first_name) >= 2;
 
 6--Which actor has appeared in the most films?
+
+--solution 1
 
 set @max_film=
 (
@@ -56,29 +59,98 @@ on a.actor_id = b.actor_id
 group by b.actor_id
 having count_film = @max_film
 
+--solution 2
+
+select b.first_name, b.last_name, count(a.film_id) as films
+from film_actor a 
+join actor b
+on a.actor_id = b.actor_id 
+group by a.actor_id 
+order by count(a.film_id)desc
+limit 1
+
+--solution 3
+
+select actor.actor_id, actor.first_name, actor.last_name,
+       count(actor_id) as film_count
+from actor join film_actor using (actor_id)
+group by actor_id
+order by film_count desc
+limit 1;
 
 7--Is 'Academy Dinosaur' available for rent from Store 1?
 
-select b.film_id, b.title, a.store_id 
+select a.store_id, b.film_id, b.title 
 from inventory a
 join film b
 on a.film_id = b.film_id
 where title = 'ACADEMY DINOSAUR' and store_id = '1'
 
 
-8--When is 'Academy Dinosaur' due?
+-- Step 1: which copies are at Store 1?
 
-select film_id, inventory_id, title,rental_date,rental_duration,DATE_ADD(rental_date,INTERVAL 6 DAY)as duedate
-from 
-(select 
-a.film_id, a.title, a.rental_duration, c.rental_date, c.inventory_id
-from 
-film a join inventory b on a.film_id = b.film_id
-join rental c on b.inventory_id = c.inventory_id
-where title = 'ACADEMY DINOSAUR' 
-order by rental_date)temp
+select film.film_id, film.title, store.store_id, inventory.inventory_id
+from inventory 
+join store using (store_id) 
+join film using (film_id)
+where film.title = 'Academy Dinosaur' and store.store_id = 1;
 
-9--What is that average length of all the films in the sakila DB?
+-- Step 2: pick an inventory_id to rent:
+
+--solution 1
+
+select distinct inventory.inventory_id
+from inventory 
+     join store using (store_id)
+     join film using (film_id)
+     join rental using (inventory_id)
+where film.title = 'Academy Dinosaur'
+      and store.store_id = 1
+      and not exists (select * from rental
+                      where rental.inventory_id = inventory.inventory_id
+                      and rental.return_date is null);
+
+--solution 2
+
+select distinct inventory.inventory_id
+from inventory join store using (store_id)
+     join film using (film_id)
+     join rental using (inventory_id)
+where film.title = 'Academy Dinosaur'
+      and store.store_id = 1
+      and inventory_id not in (select inventory_id from rental
+                               where rental.inventory_id = inventory.inventory_id
+							   and rental.return_date is null);
+
+--solution 3
+
+select distinct inventory.inventory_id
+from inventory join store using (store_id)
+     join film using (film_id)
+     join rental using (inventory_id)
+where film.title = 'Academy Dinosaur'
+      and store.store_id = 1
+      and inventory_id in (select inventory_id from rental
+                               where rental.inventory_id = inventory.inventory_id
+							   and rental.return_date is not null);
+
+
+8-- Insert a record to represent Mary Smith renting 'Academy Dinosaur' from Mike Hillyer at Store 1 today .
+
+insert into rental (rental_date, inventory_id, customer_id, staff_id)
+values (NOW(), 1, 1, 1);
+
+9--When is 'Academy Dinosaur' due?
+
+select film_id, inventory_id, title,rental_date,rental_duration,DATE_ADD(rental_date,INTERVAL rental_duration DAY) as duedate
+from (select a.film_id, a.title, a.rental_duration, c.rental_date, c.inventory_id
+	  from film a 
+      join inventory b on a.film_id = b.film_id
+      join rental c on b.inventory_id = c.inventory_id
+      where title = 'ACADEMY DINOSAUR' 
+      order by rental_date desc)temp;
+
+10--What is that average length of all the films in the sakila DB?
 
 set @AVG_lenght=
 (select AVG(length) as AVG_length
@@ -86,13 +158,19 @@ from film);
 
 select @AVG_lenght
 
+select AVG(length) as AVG_length
+from film
+
 10--What is the average length of films by category?
 
-select b.category_id, AVG(length)
-from category a join film_category b on a.category_id = b.category_id
+select b.category_id, a.name, AVG(length)
+from category a 
+join film_category b 
+on a.category_id = b.category_id
 join film c on b.film_id = c.film_id 
 group by category_id
 order by category_id
+
 
 11--Which film categories are long? Long = lengh is longer than the average film length?
 
@@ -156,6 +234,9 @@ WHERE country in ('Afghanistan', 'Bangladesh', 'China')
 alter table actor
 add column middle_name VARCHAR(15) after first_name
 
+select *
+from actor
+
 -- 3b. You realize that some of these actors have tremendously long last names.
 --  Change the data type of the middle_name column to blobs.
 
@@ -205,6 +286,8 @@ WHERE Last_name = 'WILLIAMS'
 -- 5a. You cannot locate the schema of the address table. Which query would you use to re-create it?
 
 ？ mysqldump 
+
+
 
 
 -- 6a. Use JOIN to display the first and last names, as well as the address, of each staff member. Use the tables staff and address:
@@ -417,3 +500,5 @@ from view_top5genres
 drop view view_top5genres
 
 show tables
+
+
